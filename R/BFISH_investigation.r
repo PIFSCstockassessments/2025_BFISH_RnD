@@ -23,3 +23,11 @@ select(X, SPECIES_CD, SCIENTIFIC_NAME, COMMON_NAME)
 # Filter catch data for Deep7 species only
 deep7_catch <- CRF_CATCH %>% 
 filter(SPECIES_CD %in% deep7_id$SPECIES_CD)
+
+deep7_samples <- CRF_SAMPLE %>% 
+filter(SAMPLE_ID %in% deep7_catch$SAMPLE_ID) %>% 
+select(BFISH, SAMPLE_ID, SAMPLE_DATE, TARGET_GRID_ID, PSU, SAMPLE_MEAN_DEPTH_M)
+
+# Combine PSU info with catch info
+deep7_catch <- deep7_catch %>% 
+left_join(deep7_samples, by = "SAMPLE_ID") 

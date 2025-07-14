@@ -33,3 +33,22 @@ write.csv(CRF_SAMPLE, file.path("01_Data", "CRF_SAMPLE.csv"))
 # Zip files and save to shared drive
 files2zip <- dir(file.path(getwd(), "01_Data/"), full.names = TRUE)
 zip(zipfile = "A:/Shared drives/NMFS PIC ISAP/02_Projects/2025_BFISH_RnD/BFISH_data.zip", files = files2zip)
+
+# Download tables for camera survey
+schema_name <- "BFISH"   #stays the same for all tables         
+table_name <- "CAM_LENGTHS"                
+CAM_LENGTHS <- dbGetQuery(con, paste0("SELECT * FROM ", schema_name, ".", table_name))
+table_name <- "CAM_MAXN" 
+CAM_MAXN <- dbGetQuery(con, paste0("SELECT * FROM ", schema_name, ".", table_name))
+table_name <- "CAM_SAMPLE" 
+CAM_SAMPLE <- dbGetQuery(con, paste0("SELECT * FROM ", schema_name, ".", table_name))
+# Disconnect from database
+dbDisconnect(con)
+# Save CSVs 
+write.csv(CAM_LENGTHS, file.path("01_Data", "CAM_LENGTHS.csv"))
+write.csv(CAM_MAXN, file.path("01_Data", "CAM_MAXN.csv"))
+write.csv(CAM_SAMPLE, file.path("01_Data", "CAM_SAMPLE.csv"))
+
+# Zip files and save to shared drive
+files2zip <- dir(file.path(getwd(), "01_Data/"), full.names = TRUE)
+zip(zipfile = "A:/Shared drives/NMFS PIC ISAP/02_Projects/2025_BFISH_RnD/BFISH_data.zip", files = files2zip)

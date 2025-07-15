@@ -14,27 +14,8 @@ sps_lookup <- read.csv(file.path(main.dir, "01_Data", "sps_lookup.csv"))
 CRF_SAMPLE <- read.csv(file.path(main.dir, "01_Data", "CRF_SAMPLE.csv"))
 psu_lookup <- read.csv(file.path(main.dir, "01_Data", "BFISH PSU lookup table.csv"))
 index_dt <- read.csv(file.path(main.dir, "01_Data", "index_dt.csv"))
-
-
-# # Get species ID info for Deep7 
-# deep7 <- c("Gindai", "Kalekale", "Ehu", "Onaga", "Hahapuupuu", "Opakapaka", "Lehi")
-
-# deep7_id <- sps_lookup %>%
-# filter(COMMON_NAME %in% deep7) %>% 
-# select(X, SPECIES_CD, SCIENTIFIC_NAME, COMMON_NAME)
-
-# # Filter catch data for Deep7 species only
-# deep7_catch <- CRF_CATCH %>% 
-# filter(SPECIES_CD %in% deep7_id$SPECIES_CD)
-
-# deep7_samples <- CRF_SAMPLE %>% 
-# filter(SAMPLE_ID %in% deep7_catch$SAMPLE_ID) %>% 
-# select(BFISH, SAMPLE_ID, SAMPLE_DATE, TARGET_GRID_ID, PSU, SAMPLE_MEAN_DEPTH_M)
-
-# # Combine sample and PSU info with catch info
-# deep7_catch <- deep7_catch %>% 
-# left_join(deep7_samples, by = "SAMPLE_ID") %>%
-# left_join(psu_lookup, by = "PSU")
+CAM_LEN <- read.csv(file.path(main.dir, "01_Data", "CAM_LENGTHS.csv"))
+CAM_SAMPLE <- read.csv(file.path(main.dir, "01_Data", "CAM_SAMPLE.csv"))
 
 # Opaka grids
 opaka_rf_cvs <- index_dt %>% 
@@ -95,3 +76,56 @@ cv_mod <- lm(CV_opaka_rf ~ Num_grids, data = grids_deep7)
 new <- data.frame(Num_grids = seq(300,600,by=25))
 new$predicted_cv <- round(predict(cv_mod, new), 2)
 
+## Size data investigation 
+# Get species ID info for Deep7 
+deep7 <- c("Gindai", "Kalekale", "Ehu", "Onaga", "Hahapuupuu", "Opakapaka", "Lehi")
+
+deep7_id <- sps_lookup %>%
+filter(COMMON_NAME %in% deep7) %>% 
+select(X, SPECIES_CD, SCIENTIFIC_NAME, COMMON_NAME)
+
+# Filter catch data for Deep7 species only
+deep7_catch <- CRF_CATCH %>% 
+filter(SPECIES_CD %in% deep7_id$SPECIES_CD)
+
+deep7_samples <- CRF_SAMPLE %>% 
+filter(SAMPLE_ID %in% deep7_catch$SAMPLE_ID) %>% 
+select(BFISH, SAMPLE_ID, SAMPLE_DATE, TARGET_GRID_ID, PSU, SAMPLE_MEAN_DEPTH_M)
+
+# Combine sample and PSU info with catch info
+deep7_catch <- deep7_catch %>% 
+left_join(deep7_samples, by = "SAMPLE_ID") %>%
+left_join(psu_lookup, by = "PSU") %>%
+mutate(Gear_type = "fishing")
+
+deep7_cam_lengths <- CAM_LEN %>%
+filter(SPECIES_CD %in% deep7_id$SPECIES_CD)
+
+deep7_cam_samples <- CAM_SAMPLE %>%
+filter(DROP_CD %in% deep7_cam_lengths$DROP_CD) %>% 
+select(DROP_CD, PSU)
+
+deep7_cam_lengths <- deep7_cam_lengths %>% 
+left_join(deep7_cam_samples, by = "DROP_CD") %>%
+left_join(psu_lookup, by = "PSU") %>%
+mutate(LENGTH_CM = MEAN_MM/10,
+Gear_type = "camera")
+
+deep7_rf <- deep7_catch %>%
+select(SAMPLE_ID, SPECIES_CD, COMMON_NAME, LENGTH_CM, PSU, Island, STRATA, Gear_type) 
+
+
+strata_mean_len <- deep7_cam_lengths %>% 
+select(DROP_CD, SPECIES_CD, COMMON_NAME, LENGTH_CM, PSU, Island, STRATA, Gear_type) %>%
+bind_rows(deep7_rf) %>% 
+group_by(SPECIES_CD, STRATA) %>%
+summarise(mean_length = mean(LENGTH_CM, na.rm =T),
+SD = sd(LENGTH_CM, na.rm = T),
+N = n()) 
+
+strata_mean_len %>%
+ggplot(aes(x = SPECIES_CD, y = mean_length)) + 
+geom_col(aes(fill = SPECIES_CD)) + 
+facet_wrap(~STRATA) +
+labs(x = "Species", y = "Mean Length (cm)") +
+theme_bw()

@@ -82,6 +82,7 @@ ggsave(file.path(main.dir, "03_Outputs", "deep7_gridsvsCV.png"))
 grids_deep7 %>%
 ggplot(aes(x = Num_grids, y = CV_opaka_rf)) + 
 geom_point() +
+geom_smooth(method = lm, se = FALSE) +
 ylim(0,.4) +
 xlab("Number of grids") +
 ylab("CV for Opaka estimates") +
@@ -90,5 +91,7 @@ ggsave(file.path(main.dir, "03_Outputs", "opaka_gridsvsCV.png"))
 
 write.csv(grids_deep7, file.path("03_Outputs", "grid_counts_deep7.csv"), row.names = F)
 
-
+cv_mod <- lm(CV_opaka_rf ~ Num_grids, data = grids_deep7)
+new <- data.frame(Num_grids = seq(300,600,by=25))
+new$predicted_cv <- round(predict(cv_mod, new), 2)
 

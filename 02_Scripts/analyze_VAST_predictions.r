@@ -11,6 +11,12 @@ b_mean<-tapply(VAST$encounter_prob,VAST$STRATA,mean)
 b_sd<-tapply(VAST$encounter_prob,VAST$STRATA,sd)
 b_cv<-b_sd/b_mean
 
+# Transform to logit scale, calculate mean, then back-transform
+VAST$logit_probs <- qlogis(VAST$encounter_prob)  # or log(p/(1-p))
+mean_logit <- tapply(VAST$logit_probs,VAST$STRATA,mean, na.rm = TRUE)
+mean_prob <- plogis(mean_logit)  # or exp(x)/(1+exp(x))
+
+
 p_mean<-tapply(VAST$positive_catch,VAST$STRATA,mean)
 p_sd<-tapply(VAST$positive_catch,VAST$STRATA,sd)
 p_cv<-p_sd/p_mean
@@ -25,6 +31,10 @@ d_cv<-d_sd/d_mean
 b_mean<-tapply(VAST$encounter_prob,list(VAST$species, VAST$STRATA),mean)
 b_sd<-tapply(VAST$encounter_prob,list(VAST$species, VAST$STRATA),sd)
 b_cv<-b_sd/b_mean
+
+#apply logit transform
+mean_logit <- tapply(VAST$logit_probs,list(VAST$species, VAST$STRATA),mean, na.rm = TRUE)
+mean_prob <- plogis(mean_logit)  # or exp(x)/(1+exp(x))
 
 #probability increase to 0.24 for paka in HB_H_S
 
@@ -64,3 +74,67 @@ ggplot(merged_data) +
   labs(title = "Opakapaka - Spectral Palette",
        fill = "Encounter probability")
 
+ggsave("opakapaka_mhi.png", width = 10, height = 8, dpi = 300)
+
+#Zoom in on Maui Nui for greater detail
+VAST_paka_Maui<-VAST_paka[VAST_paka$Island=="Maui Nui",]
+HI_maui<-HI[HI$Island=="Maui Nui",]
+merged_data_Maui <- HI_maui %>%
+  left_join(VAST_paka_Maui, by = "PSU")
+
+
+ggplot(merged_data_Maui) +
+  geom_sf(aes(fill = encounter_prob), color = NA) +
+  scale_fill_distiller(palette = "Spectral", direction = -1) +
+  theme_minimal() +
+  labs(title = "Opakapaka - Maui Nui",
+       fill = "Encounter probability")
+
+ggsave("opakapaka_maui.png", width = 10, height = 8, dpi = 300)
+
+
+#Zoom in on Oahu for greater detail
+VAST_paka_Oahu<-VAST_paka[VAST_paka$Island=="Oahu",]
+HI_oahu<-HI[HI$Island=="Oahu",]
+merged_data_Oahu <- HI_oahu %>%
+  left_join(VAST_paka_Oahu, by = "PSU")
+
+
+ggplot(merged_data_Oahu) +
+  geom_sf(aes(fill = encounter_prob), color = NA) +
+  scale_fill_distiller(palette = "Spectral", direction = -1) +
+  theme_minimal() +
+  labs(title = "Opakapaka - Oahu",
+       fill = "Encounter probability")
+
+ggsave("opakapaka_oahu.png", width = 10, height = 8, dpi = 300)
+
+#Zoom in on Big Island for greater detail
+VAST_paka_Big_Island<-VAST_paka[VAST_paka$Island=="Big Island",]
+HI_Big_Island<-HI[HI$Island=="Big Island",]
+merged_data_Big_Island <- HI_Big_Island %>%
+  left_join(VAST_paka_Big_Island, by = "PSU")
+
+ggplot(merged_data_Big_Island) +
+  geom_sf(aes(fill = encounter_prob), color = NA) +
+  scale_fill_distiller(palette = "Spectral", direction = -1) +
+  theme_minimal() +
+  labs(title = "Opakapaka - Big_Island",
+       fill = "Encounter probability")
+
+ggsave("opakapaka_Big_Island.png", width = 10, height = 8, dpi = 300)
+
+#Zoom in on Kauai for greater detail
+VAST_paka_Kauai<-VAST_paka[VAST_paka$Island=="Kauai",]
+HI_Kauai<-HI[HI$Island=="Kauai",]
+merged_data_Kauai <- HI_Kauai %>%
+  left_join(VAST_paka_Kauai, by = "PSU")
+
+ggplot(merged_data_Kauai) +
+  geom_sf(aes(fill = encounter_prob), color = NA) +
+  scale_fill_distiller(palette = "Spectral", direction = -1) +
+  theme_minimal() +
+  labs(title = "Opakapaka - Kauai",
+       fill = "Encounter probability")
+
+ggsave("opakapaka_Kauai.png", width = 10, height = 8, dpi = 300)

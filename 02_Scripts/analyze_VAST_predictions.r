@@ -36,7 +36,9 @@ b_cv<-b_sd/b_mean
 mean_logit <- tapply(VAST$logit_probs,list(VAST$species, VAST$STRATA),mean, na.rm = TRUE)
 mean_prob <- plogis(mean_logit)  # or exp(x)/(1+exp(x))
 
-#probability increase to 0.24 for paka in HB_H_S
+write.csv(mean_prob,file = "strata_encounter_probs.csv")
+
+#probability increase to 0.19 for paka in HB_H_S
 
 p_mean<-tapply(VAST$positive_catch,list(VAST$species, VAST$STRATA),mean)
 p_sd<-tapply(VAST$positive_catch,list(VAST$species, VAST$STRATA),sd)
@@ -138,3 +140,78 @@ ggplot(merged_data_Kauai) +
        fill = "Encounter probability")
 
 ggsave("opakapaka_Kauai.png", width = 10, height = 8, dpi = 300)
+
+
+#################################################################
+#HB_H_S  has the best encounter probability for paka at 0.19
+#How is it distributed?
+
+ggplot(HI) +
+  geom_sf(aes(fill = factor(STRATA)), color = NA) +
+  scale_fill_brewer(palette = "Spectral") +
+  theme_minimal() +
+  labs(title = "MHI BFISH Domain",
+       fill = "Strata")
+
+p_HI<-ggplot(HI) +
+  geom_sf(aes(fill = factor(STRATA)), color = NA, size = 0.1) +
+  scale_fill_manual(values = c(
+    "HB_H_D" = "#8B4513",
+    "HB_H_M" = "#CD853F", 
+    "HB_H_S" = "#FF0000",  # Bright red to stand out
+    "HB_L_D" = "#DEB887",
+    "HB_L_M" = "#F5DEB3",
+    "HB_L_S" = "#F0E68C",
+    "SB_A_D" = "#98FB98",
+    "SB_A_M" = "#20B2AA",
+    "SB_A_S" = "#4682B4",
+    "SB_H_S" = "#483D8B"
+  )) +
+  theme_minimal() +
+  labs(title = "MHI BFISH Domain",
+       fill = "Strata")
+
+ggsave("strata_map_MHI.png", plot = p_HI, width = 10, height = 6, dpi = 300)
+
+#what is the proportion of overall domain comprised by each stratum?
+strat<-tapply(HI$OBJECTID,HI$STRATA,length)
+prop_strat<-strat/nrow(HI)
+plot(prop_strat)
+
+#Convert prop_strat to data frame
+prop_strat_df <- data.frame(
+  Strata = names(prop_strat),
+  Proportion = as.numeric(prop_strat)
+)
+
+# Create barplot with matching colors from Option 1
+p<-ggplot(prop_strat_df, aes(x = Strata, y = Proportion, fill = Strata)) +
+  geom_col(color = "white", size = 0.2) +
+  scale_fill_manual(values = c(
+    "HB_H_D" = "#8B4513",
+    "HB_H_M" = "#CD853F", 
+    "HB_H_S" = "#FF0000",  # Bright red to stand out
+    "HB_L_D" = "#DEB887",
+    "HB_L_M" = "#F5DEB3",
+    "HB_L_S" = "#F0E68C",
+    "SB_A_D" = "#98FB98",
+    "SB_A_M" = "#20B2AA",
+    "SB_A_S" = "#4682B4",
+    "SB_H_S" = "#483D8B"
+  )) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor = element_blank()
+  ) +
+  labs(
+    title = "Proportion by Strata",
+    x = "Strata",
+    y = "Proportion",
+    fill = "Strata"
+  ) +
+  scale_y_continuous(labels = scales::percent_format())
+
+# Save the plot as PNG
+ggsave("strata_proportions.png", plot = p, width = 10, height = 6, dpi = 300)
